@@ -2,7 +2,7 @@
 # Module Check and Install
 import sys, subprocess, pkg_resources
 
-required = {'visca_over_ip', 'pygame', 'opencv-python'}
+required = {'visca_over_ip', 'pygame'}
 installed = {pkg.key for pkg in pkg_resources.working_set}
 missing = required - installed
 
@@ -11,7 +11,7 @@ if missing:
         subprocess.check_call(['python', '-m', 'pip', 'install', *missing], stdout=subprocess.DEVNULL)
 
 # Imports
-import pygame, cv2
+import pygame
 from visca_over_ip import Camera
 
 #Find Camera IPs
@@ -32,13 +32,8 @@ pygame.display.set_caption("LH Camera Controller")
 cam_one_name = "Camera One"
 cam_two_name = "Camera Two"
 font = pygame.font.SysFont("Arial", 20)
-cam_one = FindCamIp("54-10-ec-a7-db-52")
-cam_two = Camera(FindCamIp("Insert Cam Two MAC address"))
-
-
-#test camera IPs
-# cam_one = "192.168.137.8"
-# cam_two = "192.168.0.200"
+cam_one = FindCamIp(#"Insert Cam One MAC Address")
+cam_two = Camera(FindCamIp(#"Insert Cam Two MAC address"))
 
 #Joystick Inits
 joysticks = [pygame.joystick.Joystick(i) for i in range(pygame.joystick.get_count())]
@@ -65,10 +60,6 @@ update = pygame.display.update()
 white = (255,255,255)
 black = (0,0,0)
 
-# def ShowStream(camera):
-#     cap = cv2.VideoCapture('rtsp://{}/vaddio-roboshot-hbdt-stream', camera)
-#     ret, frame = cap.read()
-
 def ClearScreen():
     display.fill(black)
     update
@@ -84,18 +75,6 @@ def DisplayText(camera_name):
     display.blit(font.render(camera_controls_seven, True, white,black), (100,350))
     display.blit(font.render(camera_controls_eight, True, white,black), (100,400))
     update
-
-# def CameraStream(camera):
-#     rtsp = ("rtsp://"+ camera +"/vaddio-roboshot-hdbt-stream")
-#     vcap = cv2.VideoCapture(rtsp, cv2.CAP_FFMPEG) 
-#     try:
-#         while 1:
-#             ret, frame = vcap.read()
-
-#             display.blit(frame, (0,0))
-
-#     except Exception as e:
-#         print("ERROR:", e)
 
 def CameraControl(camera, camera_name):
     control = 1
