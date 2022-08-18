@@ -16,7 +16,10 @@ from visca_over_ip import Camera
 
 #Find Camera IPs
 def FindCamIp(mac):
-    cmd = 'arp -a | findstr "{}" '.format(mac)
+    if sys.platform == "win32":
+        cmd = 'arp -a | findstr "{}" '.format(mac)
+    elif sys.platform == "darwin":
+        cmd = 'arp -a | grep "{}" '.format(mac)
     returned_output = subprocess.check_output((cmd), shell=True, stderr=subprocess.STDOUT)
     parse = str(returned_output).split(' ', 1)
     ip = parse[1].split(' ')
