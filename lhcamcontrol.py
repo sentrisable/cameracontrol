@@ -5,11 +5,15 @@ import sys, subprocess, pkg_resources
 required = {'visca_over_ip', 'pygame'}
 installed = {pkg.key for pkg in pkg_resources.working_set}
 missing = required - installed
-
 if missing:
-        python = sys.executable
-        subprocess.check_call(['python', '-m', 'pip', 'install', *missing], stdout=subprocess.DEVNULL)
-
+    install_check = input("This program requires additional packages to be installed to run. Install additional packages? [y/n] \n{}".format(missing))
+    if install_check == 'y':
+            python = sys.executable
+            subprocess.check_call(['python3', '-m', 'pip', 'install', *missing], stdout=subprocess.DEVNULL)
+    if install_check =='n':
+        quit()
+    else:
+        install_check
 # Imports
 import pygame
 from visca_over_ip import Camera
@@ -35,8 +39,8 @@ pygame.display.set_caption("LH Camera Controller")
 cam_one_name = "Camera One"
 cam_two_name = "Camera Two"
 font = pygame.font.SysFont("Arial", 20)
-cam_one = FindCamIp(#"Insert Cam One MAC Address")
-cam_two = Camera(FindCamIp(#"Insert Cam Two MAC address"))
+#cam_one = FindCamIp("Insert Cam One MAC Address")
+#cam_two = Camera(FindCamIp("Insert Cam Two MAC address"))
 
 #Joystick Inits
 joysticks = [pygame.joystick.Joystick(i) for i in range(pygame.joystick.get_count())]
@@ -98,8 +102,8 @@ def CameraControl(camera, camera_name):
             if event.type == pygame.KEYUP or pygame.JOYAXISMOTION == 0:
                 camera.pantilt(pan_speed=0, tilt_speed=0)
                 camera.zoom(speed=zoom_movement)
-           
-            elif event.type == pygame.JOYBUTTONDOWN:
+
+            if event.type == pygame.JOYBUTTONDOWN:
                 if event.button==7:
                     camdefault
                 if event.button == 0:
@@ -110,7 +114,7 @@ def CameraControl(camera, camera_name):
                 if event.button == 1:
                     joysticks[0].rumble(0, 1, 3000)
 
-            elif event.type == pygame.JOYAXISMOTION:
+            if event.type == pygame.JOYAXISMOTION:
                 if event.axis <2:
                     motion[event.axis] = int(event.value)
                     camera.pantilt(pan_speed=motion[0]*-15, tilt_speed=motion[1]*-15)
@@ -119,7 +123,17 @@ def CameraControl(camera, camera_name):
                 if event.axis == 4:
                     camera.zoom(speed=int((event.value+1)*-3.5))
             
-            elif event.type == pygame.KEYDOWN:
+            if event.type == pygame.JOYHATMOTION:
+                if event.type == pygame.HAT_DOWN:
+                    camera.decrease_exposure_compensation()
+                if event.type == pygame.HAT_UP:
+                    camera.increase_exposure_compensation()
+                if event.type == pygame.HAT_LEFT:
+                    camera.manual_focus(-7)
+                if event.type == pygame.HAT_RIGHT:
+                    camera.manual_focus(7)
+            
+            if event.type == pygame.KEYDOWN:
                 if (event.key== pygame.K_UP and event.key==pygame.K_LEFT) or event.key==pygame.K_q:
                     ul
                 if (event.key== pygame.K_UP and event.key==pygame.K_RIGHT) or event.key==pygame.K_e:
