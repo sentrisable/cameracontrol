@@ -9,14 +9,22 @@ if missing:
     install_check = input("This program requires additional packages to be installed to run. Install additional packages? [y/n] \n{}".format(missing))
     if install_check == 'y':
             python = sys.executable
-            subprocess.check_call(['python3', '-m', 'pip', 'install', *missing], stdout=subprocess.DEVNULL)
+            subprocess.check_call([python, '-m', 'pip', 'install', *missing], stdout=subprocess.DEVNULL)
     if install_check =='n':
         quit()
     else:
         install_check
 # Imports
-import pygame
+import pygame, json
 from visca_over_ip import Camera
+
+
+#Default Inits and setups
+pygame.init()
+pygame.joystick.init()
+clock = pygame.time.Clock()
+display = pygame.display.set_mode((800,500))
+pygame.display.set_caption("LH Camera Controller")
 
 #Find Camera IPs
 def FindCamIp(mac):
@@ -30,17 +38,13 @@ def FindCamIp(mac):
     print(ip[1])
     return(ip[1])
 
-#Default Inits and setups
-pygame.init()
-pygame.joystick.init()
-clock = pygame.time.Clock()
-display = pygame.display.set_mode((800,500))
-pygame.display.set_caption("LH Camera Controller")
-cam_one_name = "Camera One"
-cam_two_name = "Camera Two"
+#Current Static IPs        
+cam_one = "192.168.0.8"
+cam_two = "192.168.0.9"
+
 font = pygame.font.SysFont("Arial", 20)
 #cam_one = FindCamIp("Insert Cam One MAC Address")
-#cam_two = Camera(FindCamIp("Insert Cam Two MAC address"))
+#cam_two = FindCamIp("Insert Cam Two MAC address")
 
 #Joystick Inits
 joysticks = [pygame.joystick.Joystick(i) for i in range(pygame.joystick.get_count())]
@@ -69,7 +73,6 @@ black = (0,0,0)
 
 def ClearScreen():
     display.fill(black)
-    update
 
 def DisplayText(camera_name):
     ClearScreen()
@@ -81,19 +84,10 @@ def DisplayText(camera_name):
     display.blit(font.render(camera_controls_six, True, white,black), (100,300))
     display.blit(font.render(camera_controls_seven, True, white,black), (100,350))
     display.blit(font.render(camera_controls_eight, True, white,black), (100,400))
-    update
+    pygame.display.update()
 
 def CameraControl(camera, camera_name):
     control = 1
-    left = camera.pantilt(pan_speed=15, tilt_speed=0)
-    right = camera.pantilt(pan_speed=-15, tilt_speed=0)
-    up = camera.pantilt(pan_speed=0, tilt_speed=15)
-    down = camera.pantilt(pan_speed=0, tilt_speed=-15)
-    ul = camera.pantilt(pan_speed=15, tilt_speed=15)
-    ur = camera.pantilt(pan_speed=-15, tilt_speed=15)
-    dl = camera.pantilt(pan_speed=15, tilt_speed=-15)
-    dr = camera.pantilt(pan_speed=-15, tilt_speed=-15)
-    camdefault = camera.pantilt_home()
 
     while control:
         pygame.display.set_caption("Lighthouse Camera Controller: " + camera_name)
@@ -105,7 +99,7 @@ def CameraControl(camera, camera_name):
 
             if event.type == pygame.JOYBUTTONDOWN:
                 if event.button==7:
-                    camdefault
+                    camera.pantilt_home()
                 if event.button == 0:
                     camera.close_connection()
                     control = 0
@@ -135,42 +129,43 @@ def CameraControl(camera, camera_name):
             
             if event.type == pygame.KEYDOWN:
                 if (event.key== pygame.K_UP and event.key==pygame.K_LEFT) or event.key==pygame.K_q:
-                    ul
+                    camera.pantilt(pan_speed=15, tilt_speed=15)
                 if (event.key== pygame.K_UP and event.key==pygame.K_RIGHT) or event.key==pygame.K_e:
-                    ur
+                    camera.pantilt(pan_speed=-15, tilt_speed=15)
                 if (event.key== pygame.K_DOWN and event.key==pygame.K_LEFT) or event.key==pygame.K_z:
-                    dl
+                    camera.pantilt(pan_speed=15, tilt_speed=-15)
                 if (event.key== pygame.K_DOWN and event.key==pygame.K_RIGHT) or event.key==pygame.K_c:
-                    dr
+                    camera.pantilt(pan_speed=-15, tilt_speed=-15)
                 if event.key == pygame.K_LEFT or event.key==pygame.K_a:
-                    left
+                    camera.pantilt(pan_speed=15, tilt_speed=0)
                 if event.key == pygame.K_RIGHT or event.key==pygame.K_d:
-                    right
+                    camera.pantilt(pan_speed=-15, tilt_speed=0)
                 if event.key == pygame.K_UP or event.key==pygame.K_w:
-                    up
+                    camera.pantilt(pan_speed=0, tilt_speed=15)
                 if event.key== pygame.K_DOWN or event.key==pygame.K_x:
-                    down
+                    camera.pantilt(pan_speed=0, tilt_speed=-15)
                 if event.key == pygame.K_f:
                     camera.zoom(speed=-5)
                 if event.key == pygame.K_r:
                     camera.zoom(speed=5)
                 if event.key == pygame.K_s and event.mod & pygame.KMOD_SHIFT:
-                    camdefault
+                    camera.pantilt_home()
                 if event.key == pygame.K_ESCAPE:
                     camera.close_connection()
-                    control = 0
+                    ClearScreen()
                     pygame.display.set_caption("Lighthouse Camera Controller")
+                    control = 0
                     break
- 
-            
-            pygame.display.update()
+                
+        pygame.display.update()
 
 def main():
     running = 1
     while running:
-        ClearScreen()
-        display.blit(font.render("1 or Left Bumper for Camera One | 2 or Right Bumper for Camera Two, or ESC to quit", True, white,black), (100,100))
-        display.blit(font.render("Camera one IP: " + cam_one + " Camera 2 IP: " + cam_two, True, white,black), (100,300))
+
+        display.blit(font.render("1 or Left Bumper for Camera One | 2 or Right Bumper for Camera Two, or ESC to quit",True,white,black),(100,100))
+        display.blit(font.render("Camera one IP: {}| Camera two IP: {}".format(cam_one, cam_two), True, white,black), (100,300))
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = 0
@@ -179,22 +174,23 @@ def main():
                 if event.key == pygame.K_ESCAPE:
                     running = 0
                 if event.key == pygame.K_1:
-                    DisplayText(cam_one_name)
-                    CameraStream(cam_one)
+                    DisplayText("Camera One")
+                    CameraControl(Camera(cam_one))
                 if event.key == pygame.K_2:
-                    DisplayText(cam_two_name)
-                    CameraControl(Camera(cam_two), cam_two_name)
+                    DisplayText("Camera Two")
+                    CameraControl(Camera(cam_two))
 
             if event.type == pygame.JOYBUTTONDOWN:
                 if event.button == 0:
                     running = 0
                 if event.button == 4:
-                    DisplayText(cam_one_name)
-                    CameraControl(Camera(cam_one), cam_one_name)
+                    DisplayText("Camera One")
+                    CameraControl(Camera(cam_one))
                 if event.button == 5:
-                    DisplayText(cam_two_name)
-                    CameraControl(Camera(cam_two), cam_two_name)
-
+                    DisplayText("Camera Two")
+                    CameraControl(Camera(cam_two))
+        
+        
         clock.tick(120)  
         pygame.display.update()
 
