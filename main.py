@@ -23,7 +23,7 @@ from visca_over_ip import Camera
 pygame.init()
 pygame.joystick.init()
 clock = pygame.time.Clock()
-display = pygame.display.set_mode((800,500))
+display = pygame.display.set_mode((800,800))
 pygame.display.set_caption("LH Camera Controller")
 
 #Find Camera IPs
@@ -37,10 +37,9 @@ def FindCamIp(mac):
     ip = parse[1].split(' ')
     print(ip[1])
     return(ip[1])
-
-#Current Static IPs        
-cam_one = "192.168.0.8"
-cam_two = "192.168.0.9"
+        
+cam_one = "192.168.1.8"
+cam_two = "192.168.1.9"
 
 font = pygame.font.SysFont("Arial", 20)
 #cam_one = FindCamIp("Insert Cam One MAC Address")
@@ -59,6 +58,8 @@ camera_controls_five = "Press Q, E, Z, or C for diagonal movement"
 camera_controls_six = "Press Shift + S or Start to reset camera to default position"
 camera_controls_seven = "Left Joystick controls camera motion"
 camera_controls_eight = "Left Trigger zooms out, Right Trigger Zooms in"
+camera_controls_nine = "Select to change Focus Mode (Auto/Manual)"
+camera_controls_ten = "DPad Left/Right to focus | Dpad Up/Down to change exposure"
 
 #Camera movement defaults
 pan_movement = 0
@@ -84,13 +85,17 @@ def DisplayText(camera_name):
     display.blit(font.render(camera_controls_six, True, white,black), (100,300))
     display.blit(font.render(camera_controls_seven, True, white,black), (100,350))
     display.blit(font.render(camera_controls_eight, True, white,black), (100,400))
+    display.blit(font.render(camera_controls_nine, True, white,black), (100,450))
+    display.blit(font.render(camera_controls_ten, True, white,black), (100,500))
     pygame.display.update()
 
 def CameraControl(camera, camera_name):
     control = 1
+    js = pygame.joystick.Joystick(0)
 
     while control:
-        pygame.display.set_caption("Lighthouse Camera Controller: " + camera_name)
+        pygame.display.set_caption("Lighthouse Camera Controller: {}".format(camera_name)
+        display.blit(font.render("Focus mode: {}".format(camera.get_focus_mode()), True, white,black), (100, 600))
         for event in pygame.event.get():
 
             if event.type == pygame.KEYUP or pygame.JOYAXISMOTION == 0:
@@ -98,6 +103,11 @@ def CameraControl(camera, camera_name):
                 camera.zoom(speed=zoom_movement)
 
             if event.type == pygame.JOYBUTTONDOWN:
+                if event.button==6:
+                    if camera.get_focus_mode() == "auto":
+                        camera.set_focus_mode("manual")
+                    else:
+                        camera.set_focus_mode("auto")                        
                 if event.button==7:
                     camera.pantilt_home()
                 if event.button == 0:
@@ -106,7 +116,7 @@ def CameraControl(camera, camera_name):
                     pygame.display.set_caption("Lighthouse Camera Controller")
                     break
                 if event.button == 1:
-                    joysticks[0].rumble(0, 1, 3000)
+                    js.rumble(0, 1, 3000)
 
             if event.type == pygame.JOYAXISMOTION:
                 if event.axis <2:
@@ -118,14 +128,15 @@ def CameraControl(camera, camera_name):
                     camera.zoom(speed=int((event.value+1)*-3.5))
             
             if event.type == pygame.JOYHATMOTION:
-                if event.type == pygame.HAT_DOWN:
-                    camera.decrease_exposure_compensation()
-                if event.type == pygame.HAT_UP:
+                if js.get_hat(0) == (-1,0):
+                    camera.manual_focus(speed=-5)
+                if js.get_hat(0) == (1,0):
+                    camera.manual_focus(speed=5)
+                if js.get_hat(0) == (0,1):
                     camera.increase_exposure_compensation()
-                if event.type == pygame.HAT_LEFT:
-                    camera.manual_focus(-7)
-                if event.type == pygame.HAT_RIGHT:
-                    camera.manual_focus(7)
+                if js.get_hat(0) == (0,-1):
+                    camera.decrease_exposure_compensation()
+
             
             if event.type == pygame.KEYDOWN:
                 if (event.key== pygame.K_UP and event.key==pygame.K_LEFT) or event.key==pygame.K_q:
@@ -175,20 +186,20 @@ def main():
                     running = 0
                 if event.key == pygame.K_1:
                     DisplayText("Camera One")
-                    CameraControl(Camera(cam_one))
+                    CameraControl(Camera(cam_one), "Camera One")
                 if event.key == pygame.K_2:
                     DisplayText("Camera Two")
-                    CameraControl(Camera(cam_two))
+                    CameraControl(Camera(cam_two), "Camera Two")
 
             if event.type == pygame.JOYBUTTONDOWN:
                 if event.button == 0:
                     running = 0
                 if event.button == 4:
                     DisplayText("Camera One")
-                    CameraControl(Camera(cam_one))
+                    CameraControl(Camera(cam_one), "Camera One")
                 if event.button == 5:
                     DisplayText("Camera Two")
-                    CameraControl(Camera(cam_two))
+                    CameraControl(Camera(cam_two), "Camera Two")
         
         
         clock.tick(120)  
