@@ -38,8 +38,8 @@ def FindCamIp(mac):
     print(ip[1])
     return(ip[1])
         
-cam_one = "192.168.1.8"
-cam_two = "192.168.1.9"
+cam_one = #"INSERT CAM IP"
+cam_two = #"INSERT CAM IP"
 
 font = pygame.font.SysFont("Arial", 20)
 #cam_one = FindCamIp("Insert Cam One MAC Address")
@@ -94,7 +94,7 @@ def CameraControl(camera, camera_name):
     js = pygame.joystick.Joystick(0)
 
     while control:
-        pygame.display.set_caption("Lighthouse Camera Controller: {}".format(camera_name)
+        pygame.display.set_caption("Lighthouse Camera Controller: {}".format(camera_name))
         display.blit(font.render("Focus mode: {}".format(camera.get_focus_mode()), True, white,black), (100, 600))
         for event in pygame.event.get():
 
